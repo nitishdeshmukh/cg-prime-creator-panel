@@ -14,21 +14,23 @@ import { OtpForm } from './components/otp-form'
 
 export function Otp() {
   const navigate = useNavigate()
-  const { phoneForOtp, setPhoneForOtp } = useAuthStore((state) => state.auth)
+  const { phoneForOtp, accessToken, setPhoneForOtp } = useAuthStore(
+    (state) => state.auth
+  )
   const { redirect } = useSearch({ from: '/(auth)/otp' })
 
-  // Redirect to /sign-in if no phone number was submitted
+  // Redirect to /sign-in only if neither phone number nor active session exists
   useEffect(() => {
-    if (!phoneForOtp) {
+    if (!phoneForOtp && !accessToken) {
       navigate({
         to: '/sign-in',
         search: redirect ? { redirect } : undefined,
         replace: true,
       })
     }
-  }, [phoneForOtp, navigate, redirect])
+  }, [phoneForOtp, accessToken, navigate, redirect])
 
-  if (!phoneForOtp) {
+  if (!phoneForOtp && !accessToken) {
     return null
   }
 

@@ -1,12 +1,10 @@
-import { useState } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useNavigate, useSearch } from '@tanstack/react-router'
+import { useSearch } from '@tanstack/react-router'
 import { Loader2 } from 'lucide-react'
-import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
-import { sleep, cn } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -22,6 +20,7 @@ import {
   InputOTPSlot,
   InputOTPSeparator,
 } from '@/components/ui/input-otp'
+import { useVerifyOtp } from '@/features/auth/api/use-verify-otp'
 
 const formSchema = z.object({
   otp: z
@@ -33,10 +32,9 @@ const formSchema = z.object({
 type OtpFormProps = React.HTMLAttributes<HTMLFormElement>
 
 export function OtpForm({ className, ...props }: OtpFormProps) {
-  const navigate = useNavigate()
-  const { auth } = useAuthStore()
   const { redirect } = useSearch({ from: '/(auth)/otp' })
-  const [isLoading, setIsLoading] = useState(false)
+  const { phoneForOtp } = useAuthStore((state) => state.auth)
+  const { mutate: verifyOtp, isPending } = useVerifyOtp({ redirectTo: redirect })
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -46,32 +44,13 @@ export function OtpForm({ className, ...props }: OtpFormProps) {
   // eslint-disable-next-line react-hooks/incompatible-library
   const otp = form.watch('otp')
 
-  function onSubmit(_data: z.infer<typeof formSchema>) {
-    setIsLoading(true)
+  function onSubmit(data: z.infer<typeof formSchema>) {
+    if (!phoneForOtp) return
 
-    toast.promise(sleep(1200), {
-      loading: 'Verifying OTP...',
-      success: () => {
-        setIsLoading(false)
-
-        const userPhone = auth.phoneForOtp || 'user@example.com'
-
-        const mockUser = {
-          accountNo: 'ACC001',
-          email: userPhone,
-          role: ['user'],
-          exp: Date.now() + 24 * 60 * 60 * 1000,
-        }
-
-        auth.setUser(mockUser)
-        auth.setAccessToken('mock-access-token')
-        auth.setPhoneForOtp('') // clear temporary OTP phone after successful login
-
-        const targetPath = redirect || '/'
-        navigate({ to: targetPath, replace: true })
-        return 'Signed in successfully!'
-      },
-      error: 'Invalid OTP',
+    verifyOtp({
+      type: 1,
+      phoneNumber: phoneForOtp,
+      otp: data.otp,
     })
   }
 
@@ -91,6 +70,7 @@ export function OtpForm({ className, ...props }: OtpFormProps) {
               <FormControl>
                 <InputOTP
                   maxLength={6}
+                  disabled={isPending}
                   {...field}
                   containerClassName='justify-between sm:[&>[data-slot="input-otp-group"]>div]:w-12'
                 >
@@ -114,8 +94,8 @@ export function OtpForm({ className, ...props }: OtpFormProps) {
             </FormItem>
           )}
         />
-        <Button className='mt-2' disabled={otp.length < 6 || isLoading}>
-          {isLoading && <Loader2 className='mr-2 size-4 animate-spin' />}
+        <Button className='mt-2' disabled={otp.length < 6 || isPending}>
+          {isPending && <Loader2 className='mr-2 size-4 animate-spin' />}
           Verify & Continue
         </Button>
       </form>
