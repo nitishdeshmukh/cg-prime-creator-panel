@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ArrowRight, Loader2 } from 'lucide-react'
-import { isValidPhoneNumber } from 'react-phone-number-input'
+import { isValidPhoneNumber, parsePhoneNumber } from 'react-phone-number-input'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
@@ -44,9 +44,20 @@ export function UserAuthForm({
   })
 
   function onSubmit(data: z.infer<typeof formSchema>) {
+    let dialCode = '+91'
+    try {
+      const parsed = parsePhoneNumber(data.phone)
+      if (parsed?.countryCallingCode) {
+        dialCode = `+${parsed.countryCallingCode}`
+      }
+    } catch {
+      // fallback
+    }
+
     sendOtp({
       type: 1,
       phoneNumber: data.phone,
+      dialCode,
     })
   }
 

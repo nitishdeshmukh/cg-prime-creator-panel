@@ -19,6 +19,8 @@ export function useRegister() {
       setUser({
         ...(user || {}),
         phoneNumber: variables.phoneNumber || user?.phoneNumber || phoneForOtp,
+        dialCode: variables.dialCode || user?.dialCode,
+        email: variables.email || user?.email,
         name: variables.name,
         bio: variables.bio || null,
         youtubeLink: variables.youtubeLink || null,

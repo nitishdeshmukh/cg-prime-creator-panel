@@ -1,6 +1,7 @@
 export interface SendOtpPayload {
   type?: number
   phoneNumber?: string
+  dialCode?: string
   email?: string
 }
 
@@ -15,6 +16,7 @@ export interface SendOtpResponse {
 export interface VerifyOtpPayload {
   type?: number
   phoneNumber?: string
+  dialCode?: string
   email?: string
   otp: string
 }
@@ -23,6 +25,7 @@ export interface BackendUserData {
   id: number
   fcmToken?: string | null
   phoneNumber: string
+  dialCode?: string | null
   name?: string | null
   profilePicLink?: string | null
   latestAppVersion?: string
@@ -54,9 +57,36 @@ export interface VerifyOtpResponse {
   data: VerifyOtpData
 }
 
+export interface SendEmailOtpPayload {
+  email: string
+}
+
+export interface SendEmailOtpResponse {
+  error?: boolean
+  statusCode?: number
+  message?: string
+  serverError?: unknown | null
+  data?: unknown
+}
+
+export interface VerifyEmailOtpPayload {
+  email: string
+  otp: string
+}
+
+export interface VerifyEmailOtpResponse {
+  error?: boolean
+  statusCode?: number
+  message?: string
+  serverError?: unknown | null
+  data?: unknown
+}
+
 export interface RegisterPayload {
   name: string
-  phoneNumber?: string
+  phoneNumber: string
+  dialCode: string
+  email: string
   bio?: string
   youtubeLink?: string
 }
@@ -65,6 +95,7 @@ export interface RegisterResponse {
   error?: boolean
   statusCode?: number
   message?: string
+  serverError?: unknown | null
   data?: unknown
 }
 

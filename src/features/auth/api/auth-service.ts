@@ -4,6 +4,10 @@ import type {
   SendOtpResponse,
   VerifyOtpPayload,
   VerifyOtpResponse,
+  SendEmailOtpPayload,
+  SendEmailOtpResponse,
+  VerifyEmailOtpPayload,
+  VerifyEmailOtpResponse,
   RegisterPayload,
   RegisterResponse,
 } from './types'
@@ -33,11 +37,37 @@ export const authService = {
   },
 
   /**
+   * Send OTP to email address for on-the-spot verification
+   */
+  sendEmailOtp: async (
+    payload: SendEmailOtpPayload
+  ): Promise<SendEmailOtpResponse> => {
+    const response = await protectedApi.post<SendEmailOtpResponse>(
+      'api/auth/send-email-otp',
+      payload
+    )
+    return response.data
+  },
+
+  /**
+   * Verify entered email OTP
+   */
+  verifyEmailOtp: async (
+    payload: VerifyEmailOtpPayload
+  ): Promise<VerifyEmailOtpResponse> => {
+    const response = await protectedApi.post<VerifyEmailOtpResponse>(
+      'api/auth/verify-email-otp',
+      payload
+    )
+    return response.data
+  },
+
+  /**
    * Complete user registration profile
    */
   register: async (payload: RegisterPayload): Promise<RegisterResponse> => {
     const response = await protectedApi.post<RegisterResponse>(
-      'api/auth/register',
+      'api/creator',
       payload
     )
     return response.data

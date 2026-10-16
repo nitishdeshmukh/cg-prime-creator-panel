@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useSearch } from '@tanstack/react-router'
 import { Loader2 } from 'lucide-react'
+import { parsePhoneNumber } from 'react-phone-number-input'
 import { useAuthStore } from '@/stores/auth-store'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -33,7 +34,7 @@ type OtpFormProps = React.HTMLAttributes<HTMLFormElement>
 
 export function OtpForm({ className, ...props }: OtpFormProps) {
   const { redirect } = useSearch({ from: '/(auth)/otp' })
-  const { phoneForOtp } = useAuthStore((state) => state.auth)
+  const { phoneForOtp, dialCodeForOtp } = useAuthStore((state) => state.auth)
   const { mutate: verifyOtp, isPending } = useVerifyOtp({ redirectTo: redirect })
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -47,9 +48,22 @@ export function OtpForm({ className, ...props }: OtpFormProps) {
   function onSubmit(data: z.infer<typeof formSchema>) {
     if (!phoneForOtp) return
 
+    let dialCode = dialCodeForOtp || '+91'
+    if (!dialCodeForOtp && phoneForOtp) {
+      try {
+        const parsed = parsePhoneNumber(phoneForOtp)
+        if (parsed?.countryCallingCode) {
+          dialCode = `+${parsed.countryCallingCode}`
+        }
+      } catch {
+        // fallback
+      }
+    }
+
     verifyOtp({
       type: 1,
       phoneNumber: phoneForOtp,
+      dialCode,
       otp: data.otp,
     })
   }

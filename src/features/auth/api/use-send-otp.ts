@@ -17,9 +17,9 @@ export function useSendOtp(options?: UseSendOtpOptions) {
   return useMutation<SendOtpResponse, Error, SendOtpPayload>({
     mutationFn: (payload) => authService.sendOtp(payload),
     onSuccess: (data, variables) => {
-      // Store phone in zustand for the OTP verification step
+      // Store phone & dialCode in zustand for the OTP verification step
       if (variables.phoneNumber) {
-        setPhoneForOtp(variables.phoneNumber)
+        setPhoneForOtp(variables.phoneNumber, variables.dialCode)
       }
 
       toast.success(data.message || `OTP sent to ${variables.phoneNumber}`)

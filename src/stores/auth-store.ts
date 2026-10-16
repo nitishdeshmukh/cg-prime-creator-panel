@@ -4,11 +4,13 @@ import { getCookie, setCookie, removeCookie } from '@/lib/cookies'
 const ACCESS_TOKEN = 'thisisjustarandomstring'
 const REFRESH_TOKEN = 'refresh_token'
 const OTP_PHONE = 'otp_phone_number'
+const OTP_DIAL_CODE = 'otp_dial_code'
 
 export interface AuthUser {
   id?: number
   accountNo?: string
   phoneNumber?: string
+  dialCode?: string | null
   name?: string | null
   email?: string | null
   profilePicLink?: string | null
@@ -33,7 +35,8 @@ interface AuthState {
     resetAccessToken: () => void
     reset: () => void
     phoneForOtp: string
-    setPhoneForOtp: (phone: string) => void
+    dialCodeForOtp: string
+    setPhoneForOtp: (phone: string, dialCode?: string) => void
   }
 }
 
@@ -65,6 +68,7 @@ export const useAuthStore = create<AuthState>()((set) => {
   const initAccessToken = safeParseToken(getCookie(ACCESS_TOKEN))
   const initRefreshToken = safeParseToken(getCookie(REFRESH_TOKEN))
   const initOtpPhone = getCookie(OTP_PHONE) || ''
+  const initOtpDialCode = getCookie(OTP_DIAL_CODE) || ''
   const initUser = getStoredUser()
 
   return {
@@ -119,20 +123,39 @@ export const useAuthStore = create<AuthState>()((set) => {
           return { ...state, auth: { ...state.auth, accessToken: '' } }
         }),
       phoneForOtp: initOtpPhone,
-      setPhoneForOtp: (phone) =>
+      dialCodeForOtp: initOtpDialCode,
+      setPhoneForOtp: (phone, dialCode) =>
         set((state) => {
           if (phone) {
             setCookie(OTP_PHONE, phone, 60 * 10) // 10 minutes validity
           } else {
             removeCookie(OTP_PHONE)
           }
-          return { ...state, auth: { ...state.auth, phoneForOtp: phone } }
+
+          const resolvedDialCode =
+            dialCode !== undefined ? dialCode : state.auth.dialCodeForOtp
+
+          if (resolvedDialCode) {
+            setCookie(OTP_DIAL_CODE, resolvedDialCode, 60 * 10)
+          } else {
+            removeCookie(OTP_DIAL_CODE)
+          }
+
+          return {
+            ...state,
+            auth: {
+              ...state.auth,
+              phoneForOtp: phone,
+              dialCodeForOtp: resolvedDialCode,
+            },
+          }
         }),
       reset: () =>
         set((state) => {
           removeCookie(ACCESS_TOKEN)
           removeCookie(REFRESH_TOKEN)
           removeCookie(OTP_PHONE)
+          removeCookie(OTP_DIAL_CODE)
           try {
             localStorage.removeItem(USER_DATA)
           } catch {
@@ -146,6 +169,7 @@ export const useAuthStore = create<AuthState>()((set) => {
               accessToken: '',
               refreshToken: '',
               phoneForOtp: '',
+              dialCodeForOtp: '',
             },
           }
         }),
